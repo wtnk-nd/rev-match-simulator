@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#111111">
+<meta name="description" content="MX-5 Roadster ND 6MT REV-Match Simulator">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="REV-Match Simulator">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180.png">
+<link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+<title>MX-5 Roadster ND 6MT REV-Match Simulator</title>
+<style>
+:root{
+  --bg:#f1f2f4; --panel:#fff; --ink:#111; --muted:#686d73;
+  --line:#c8ccd0; --accent:#111; --red:#e6a4a4; --red-dark:#ba6b6b;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);-webkit-text-size-adjust:100%;overscroll-behavior:none;-webkit-text-size-adjust:100%;overscroll-behavior:none;
+  font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue","Noto Sans JP",sans-serif}
+.app{max-width:980px;margin:auto;padding:22px 18px 28px}
+h1{margin:0 0 13px;font-size:21px;font-weight:700;letter-spacing:.02em}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px}
+.meter-panel{padding:14px 26px 12px;overflow:hidden}
+.meter-wrap{width:min(720px,100%);margin:auto;position:relative;aspect-ratio:1.48/1}
+.meter-wrap svg{width:100%;height:100%;display:block;overflow:visible}
+.center-info{display:none}
+.current-gear{font-size:42px;line-height:.95;font-weight:800}
+.speed{font-size:46px;line-height:1.02;font-weight:800;letter-spacing:-.03em}
+.speed-unit{font-size:25px;font-weight:500;margin-left:4px}
+.center-caption{font-size:14px;color:#555;margin-top:7px}
+.meter-label{font-size:15px;font-weight:700;fill:#111}
+.small-label{font-size:12px;fill:#62666b}
+.tick{stroke:#151515;stroke-linecap:round}
+.tick-faint{stroke:#95999d;stroke-width:1}
+.tick-mid{stroke:#60656a;stroke-width:2}
+.tick-major{stroke:#111;stroke-width:3}
+.scale-number{font-size:18px;font-weight:700;fill:#111}
+.pill text{font-size:15px;font-weight:700;dominant-baseline:middle}
+.pill.current rect{fill:#000}
+.pill.current text{fill:#fff}
+.pill.adj rect{fill:#aeb0b2}
+.pill.adj text{fill:#fff}
+.delta-text{font-size:14px;font-weight:700;fill:#111}
+.pointer-main{stroke:#111;stroke-width:6;stroke-linecap:round}
+.pointer-adj{stroke:#aaa;stroke-width:5;stroke-linecap:round}
+.pointer-hub{fill:#111}
+.controls{display:grid;grid-template-columns:1.45fr 1fr;gap:12px;margin-top:12px}
+.control-panel{padding:15px 16px}
+.section-title{font-size:13px;color:var(--muted);font-weight:700;margin-bottom:6px}
+.rpm-readout{font-size:24px;font-weight:800;margin-bottom:5px;font-variant-numeric:tabular-nums}
+.slider-area{position:relative;padding-bottom:22px}
+.slider-zone{position:absolute;left:0;right:0;top:11px;height:8px;border-radius:5px;
+ background:linear-gradient(to right,#d7dade 0 93.75%,#e9bcbc 93.75% 100%);pointer-events:none}
+input[type=range]{-webkit-appearance:auto;touch-action:pan-x;touch-action:pan-x;position:relative;width:100%;height:30px;margin:0;z-index:2;
+ background:transparent;accent-color:#222}
+.slider-ticks{display:flex;justify-content:space-between;font-size:11px;color:#656b71}
+.gear-box{display:flex;align-items:center;justify-content:space-between;min-height:102px;padding:15px 16px}
+.gear-label{font-size:13px;color:var(--muted);font-weight:700;margin-bottom:2px}
+.gear-now{font-size:50px;font-weight:800;line-height:1}
+.buttons{display:flex;gap:7px}
+button{width:76px;height:44px;background:#fff;border:1px solid #aeb4ba;border-radius:8px;
+ font-size:14px;font-weight:800;cursor:pointer}
+button:hover:not(:disabled){background:#f2f3f4}
+button:disabled{opacity:.35;cursor:not-allowed}
+.conditions{margin-top:12px;padding:13px 16px;color:#62676d;font-size:12px;line-height:1.75}
+@media(max-width:720px){
+  .app{width:100%;padding:10px 8px 18px}
+  h1{font-size:17px;margin-bottom:8px;line-height:1.35}
+  .meter-panel{padding:2px 2px 0;overflow:hidden}
+  .meter-wrap{width:100%;max-width:none;aspect-ratio:1.48/1}
+  .scale-number{font-size:22px}
+  .meter-label{font-size:17px}
+  .pill text{font-size:16px}
+  .delta-text{font-size:15px}
+  .controls{grid-template-columns:1fr;gap:8px;margin-top:8px}
+  .control-panel{padding:11px 12px}
+  .gear-box{min-height:86px;padding:11px 12px}
+  .gear-now{font-size:43px}
+  .buttons{gap:6px;flex-shrink:0}
+  .buttons button{height:46px;width:76px}
+  .conditions{margin-top:8px;padding:10px 12px;font-size:11px;line-height:1.65;overflow-wrap:anywhere}
+}
+@media(max-width:380px){
+  .app{padding-left:6px;padding-right:6px}
+  .meter-panel{padding-left:1px;padding-right:1px}
+  .scale-number{font-size:21px}
+  .meter-label{font-size:16px}
+  .pill text{font-size:15px}
+  .delta-text{font-size:14px}
+  .gear-now{font-size:39px}
+  .buttons{gap:5px}
+  .buttons button{width:68px;font-size:12px}
+  .rpm-readout{font-size:21px}
+  .section-title{font-size:12px}
+}
+</style>
+</head>
+<body>
+<noscript><div style="position:fixed;z-index:9999;left:10px;right:10px;top:10px;padding:12px 14px;background:#fff3cd;border:1px solid #e0b84d;border-radius:10px;font-weight:700;font-family:-apple-system,BlinkMacSystemFont,sans-serif;">このHTMLはSafariで開くと操作できます。iPhoneの「ファイル」アプリのプレビューではJavaScriptが動作しないため、ボタンやスライダーは反応しません。</div></noscript>
+<div class="app">
+  <h1>MX-5 Roadster ND 6MT REV-Match Simulator</h1>
+
+  <div class="panel meter-panel">
+    <div class="meter-wrap">
+      <svg id="meter" viewBox="0 0 760 500" aria-label="タコメーター"></svg>
+      <div class="center-info" aria-hidden="true"></div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div class="panel control-panel">
+      <div class="section-title">エンジン回転数</div>
+      <div class="rpm-readout"><span id="rpm">4,200</span> rpm</div>
+      <div class="slider-area">
+        <div class="slider-zone"></div>
+        <input id="rpmSlider" type="range" min="0" max="8000" step="100" value="4200">
+        <div class="slider-ticks">
+          <span>0</span><span>1</span><span>2</span><span>3</span><span>4</span>
+          <span>5</span><span>6</span><span>7</span><span>8</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel gear-box">
+      <div>
+        <div class="gear-label">現在のギア</div>
+        <div class="gear-now" id="gear">3</div>
+      </div>
+      <div class="buttons">
+        <button id="down">DOWN</button>
+        <button id="up">UP</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel conditions">
+    <b>計算条件</b><br>
+    ギア比：1速 5.087 / 2速 2.991 / 3速 2.035 / 4速 1.594 / 5速 1.286 / 6速 1.000　
+    最終減速比：2.866　レブリミット：7,500 rpm　タイヤ：195/50R16
+  </div>
+</div>
+
+<script>
+const ratios=[5.087,2.991,2.035,1.594,1.286,1.000];
+const finalDrive=2.866, redline=7500, maxRpm=8000;
+const tireDiameterM=(195*0.5*2+16*25.4)/1000;
+const tireCirc=Math.PI*tireDiameterM;
+let gear=3, rpm=4200;
+
+const $=id=>document.getElementById(id);
+const fmt=n=>Math.round(n).toLocaleString('ja-JP');
+
+function speedFromRpm(r,g){
+  return r*tireCirc*60/(ratios[g-1]*finalDrive*1000);
+}
+function rpmForSpeed(s,g){
+  return s*ratios[g-1]*finalDrive*1000/(tireCirc*60);
+}
+
+/* PDF design:
+   0 rpm = 6 o'clock
+   5500 rpm = 12 o'clock
+   From 5500 to 8000 the pitch is identical to 0..5500.
+   Therefore angle is proportional to rpm across the whole range.
+*/
+function degForRpm(r){
+  return 90 + (r/5500)*180;
+}
+function polar(cx,cy,r,deg){
+  const a=deg*Math.PI/180;
+  return [cx+r*Math.cos(a), cy+r*Math.sin(a)];
+}
+function arcPath(cx,cy,r,a1,a2){
+  const p1=polar(cx,cy,r,a1), p2=polar(cx,cy,r,a2);
+  const large=(a2-a1)>180?1:0;
+  return `M ${p1[0]} ${p1[1]} A ${r} ${r} 0 ${large} 1 ${p2[0]} ${p2[1]}`;
+}
+function ringPath(cx,cy,r1,r2,a1,a2){
+  const p1=polar(cx,cy,r2,a1), p2=polar(cx,cy,r2,a2);
+  const q2=polar(cx,cy,r1,a2), q1=polar(cx,cy,r1,a1);
+  const large=(a2-a1)>180?1:0;
+  return `M ${p1[0]} ${p1[1]} A ${r2} ${r2} 0 ${large} 1 ${p2[0]} ${p2[1]}
+          L ${q2[0]} ${q2[1]} A ${r1} ${r1} 0 ${large} 0 ${q1[0]} ${q1[1]} Z`;
+}
+function svgEl(svg,name,attrs,text=''){
+  const ns='http://www.w3.org/2000/svg', e=document.createElementNS(ns,name);
+  Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,v));
+  if(text)e.textContent=text;
+  svg.appendChild(e); return e;
+}
+
+function drawMeter(speed){
+  const svg=$('meter');
+  svg.innerHTML='';
+  const cx=760*0.5, cy=252, outer=190;
+  const startDeg=90, endDeg=degForRpm(8000);
+  const ns='http://www.w3.org/2000/svg';
+
+  const el=(name,attrs,text)=>{
+    const e=document.createElementNS(ns,name);
+    Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,v));
+    if(text!==undefined)e.textContent=text;
+    svg.appendChild(e); return e;
+  };
+  const path=(d,attrs={})=>el('path',Object.assign({d},attrs));
+  const text=(x,y,str,attrs={})=>el('text',Object.assign({x,y},attrs),str);
+
+  // PDFのメーター外形：右下を大きく開け、0rpm側は6時で終端。
+  const p0=polar(cx,cy,outer,startDeg);
+  const p8=polar(cx,cy,outer,endDeg);
+  const large=1;
+  // メーター面は内周の黒線を作らず、白い面だけを描画。黒線は外周のみ。
+  const shell=`M ${cx} ${cy} L ${p0[0]} ${p0[1]} A ${outer} ${outer} 0 ${large} 1 ${p8[0]} ${p8[1]} Z`;
+  path(shell,{fill:'#fff',stroke:'none'});
+  path(`M ${p0[0]} ${p0[1]} A ${outer} ${outer} 0 ${large} 1 ${p8[0]} ${p8[1]}`,{fill:'none',stroke:'#111','stroke-width':2});
+
+  // 7500-8000rpm レッドゾーン。内側の円線は作らず、外周沿いの帯だけを赤くする。
+  const rz1=polar(cx,cy,outer-8,degForRpm(7500));
+  const rz2=polar(cx,cy,outer-8,endDeg);
+  path(`M ${rz1[0]} ${rz1[1]} A ${outer-8} ${outer-8} 0 0 1 ${rz2[0]} ${rz2[1]}`,{fill:'none',stroke:'#e7a4a4','stroke-width':16,'stroke-linecap':'butt'});
+  path(`M ${p0[0]} ${p0[1]} A ${outer} ${outer} 0 ${large} 1 ${p8[0]} ${p8[1]}`,{fill:'none',stroke:'#111','stroke-width':2});
+
+  // 100rpm刻みの目盛。1000=太、500=中、100=細。
+  for(let r=0;r<=8000;r+=100){
+    const a=degForRpm(r);
+    // 目盛りは従来の約半分の長さ。数字との干渉を避けるため数字はさらに内側へ。
+    let rin=outer-10, width=1;
+    if(r%1000===0){rin=outer-20;width=3}
+    else if(r%500===0){rin=outer-15;width=2}
+    const a1=polar(cx,cy,rin,a), a2=polar(cx,cy,outer-6,a);
+    el('line',{x1:a1[0],y1:a1[1],x2:a2[0],y2:a2[1],stroke:r%1000===0?'#111':r%500===0?'#555':'#9b9da0','stroke-width':width,'stroke-linecap':'round'});
+    if(r%1000===0){
+      const q=polar(cx,cy,outer-40,a);
+      text(q[0],q[1]+6,String(r/1000),{'text-anchor':'middle',fill:'#111','font-size':21,'font-weight':700});
+    }
+  }
+
+  const neighbors=[gear-1,gear+1].filter(g=>g>=1&&g<=6);
+  const gearRpms={};
+  neighbors.forEach(g=>gearRpms[g]=rpmForSpeed(speed,g));
+
+  // 針と中央のギア番号
+  const needle=(r,color,width,gearNum,isCurrent)=>{
+    const rr=Math.min(8000,Math.max(0,r));
+    const a=degForRpm(rr);
+    const tip=polar(cx,cy,166,a), base=polar(cx,cy,27,a);
+    el('line',{x1:base[0],y1:base[1],x2:tip[0],y2:tip[1],stroke:color,'stroke-width':width,'stroke-linecap':'round'});
+    if(!isCurrent){
+      const lab=polar(cx,cy,82,a);
+      const circleFill = rr>7500 ? '#e5a0a0' : '#aaa';
+      el('circle',{cx:lab[0],cy:lab[1],r:15,fill:circleFill});
+      text(lab[0],lab[1]+6,String(gearNum),{'text-anchor':'middle',fill:'#fff','font-size':16,'font-weight':700});
+    }
+    return a;
+  };
+
+  neighbors.forEach(g=>{
+    const over=gearRpms[g]>7500;
+    needle(gearRpms[g],over?'#e5a0a0':'#aaa',5,g,false);
+  });
+  const currentNeedleColor=rpm>7500?'#d65a5a':'#111';
+  const currentA=needle(rpm,currentNeedleColor,6,gear,true);
+  el('circle',{cx,cy,r:11,fill:'#111'});
+
+  // 「針の先の方」にエンジン回転数。現在は黒、隣接ギアはグレー。
+  const rpmPill=(r,current)=>{
+    const a=degForRpm(Math.min(8000,Math.max(0,r)));
+    const p=polar(cx,cy,outer+35,a), w=66,h=27;
+    let x=p[0]-w/2, y=p[1]-h/2;
+    x=Math.max(8,Math.min(760-w-8,x)); y=Math.max(8,Math.min(500-h-8,y));
+    const over=r>7500;
+    const fill=current ? (over?'#d65a5a':'#000') : (over?'#e5a0a0':'#aaa');
+    el('rect',{x,y,width:w,height:h,rx:8,fill});
+    text(x+w/2,y+h/2+5,fmt(r),{'text-anchor':'middle',fill:'#fff','font-size':18,'font-weight':700});
+  };
+  // 重なり順：現在のギアの回転数（最前面）→ 回転数差 → その他の回転数。
+  // SVGは後から描いた要素ほど手前になるため、逆順で描画する。
+  neighbors.forEach(g=>rpmPill(gearRpms[g],false));
+
+  // 回転数差は針と針の間。現在の回転数より手前には出さない。
+  neighbors.forEach(g=>{
+    const other=gearRpms[g], otherA=degForRpm(Math.min(8000,Math.max(0,other)));
+    let diff=otherA-currentA;
+    let mid=currentA+diff/2;
+    const d=other-rpm;
+    if(Math.abs(diff)>180)mid+=180;
+    // 回転数差が小さいほど、差の表示を外側へ逃がして重なりを避ける。
+    // 回転数表示そのものは従来どおり outer+35 の同じ半径で動かし、
+    // 差の表示だけを差の大きさに応じて外側へ移動する。
+    // 1200rpm以上の差では基本半径に戻し、差が小さいほど最大30px外側へ出す。
+    // 外側への移動量は「実際の回転数差」ではなく、
+    // 8000rpmで針が止まることを考慮した「表示上の回転数差」を使う。
+    // 例：現在7600rpm、相手11170rpmなら、表示上は8000-7600=400rpm。
+    const displayedCurrentRpm=Math.min(8000,Math.max(0,rpm));
+    const displayedOtherRpm=Math.min(8000,Math.max(0,other));
+    const rpmGap=Math.abs(displayedOtherRpm-displayedCurrentRpm);
+    let extraRadius=Math.max(0, Math.min(40, (1200-rpmGap) * (40/600)));
+    // 高回転域では外側への逃がし量を1.5倍にする。
+    // 6000rpm以上を高回転域として扱い、最大60pxまで外側へ移動する。
+    if(displayedCurrentRpm>=6000) extraRadius=Math.min(60, extraRadius*1.5);
+    const midRadius=outer+35 + extraRadius;
+    const q=polar(cx,cy,midRadius,mid);
+    text(q[0],q[1],`${d>=0?'+':''}${fmt(d)}`,{'text-anchor':'middle','dominant-baseline':'middle',fill:'#111','font-size':18,'font-weight':700});
+  });
+
+  // 現在のギアの回転数を最後に描画して最前面にする。
+  rpmPill(rpm,true);
+
+  // PDFの右下の情報ブロックをメーター内部に配置。
+  // 「今のギア」と車速を大きく表示。
+  const infoX=cx+73, infoY=cy+93;
+  text(infoX,infoY,String(gear),{fill:'#111','font-size':46,'font-weight':800});
+  text(infoX,infoY+61,String(Math.round(speed)),{fill:'#111','font-size':50,'font-weight':800});
+  text(infoX+102,infoY+61,'km',{fill:'#111','font-size':24,'font-weight':500});
+}
+function update(){
+  const speed=speedFromRpm(rpm,gear);
+  $('rpm').textContent=fmt(rpm);
+  $('gear').textContent=gear;
+  $('down').disabled=gear<=1;
+  $('up').disabled=gear>=6;
+  drawMeter(speed);
+}
+
+function initApp(){
+  if(window.__gearSimInitialized)return;
+  window.__gearSimInitialized=true;
+
+  const slider=$('rpmSlider');
+  const up=$('up');
+  const down=$('down');
+
+  slider.addEventListener('input',function(){
+    rpm=Number(this.value)||0;
+    update();
+  });
+  slider.addEventListener('change',function(){
+    rpm=Number(this.value)||0;
+    update();
+  });
+
+  up.addEventListener('click',function(){
+    if(gear>=6)return;
+    const speed=speedFromRpm(rpm,gear);
+    gear++;
+    rpm=Math.min(maxRpm,Math.max(0,Math.round(rpmForSpeed(speed,gear)/100)*100));
+    slider.value=String(rpm);
+    update();
+  });
+
+  down.addEventListener('click',function(){
+    if(gear<=1)return;
+    const speed=speedFromRpm(rpm,gear);
+    gear--;
+    rpm=Math.min(maxRpm,Math.max(0,Math.round(rpmForSpeed(speed,gear)/100)*100));
+    slider.value=String(rpm);
+    update();
+  });
+
+  update();
+}
+
+// The script is at the end of <body>, so initialize immediately.
+// The DOMContentLoaded fallback also covers browsers/webviews that delay parsing.
+if(document.readyState==='loading'){
+  document.addEventListener('DOMContentLoaded',initApp,{once:true});
+}else{
+  initApp();
+}
+setTimeout(initApp,0);
+</script>
+<noscript><div style="padding:12px;text-align:center;font-weight:700">操作にはJavaScriptを有効にしたSafariで開いてください。</div></noscript>
+</body>
+</html>
