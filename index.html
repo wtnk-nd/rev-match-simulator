@@ -63,7 +63,7 @@ input[type=range]{-webkit-appearance:auto;touch-action:pan-x;position:relative;w
 .gear-label{font-size:13px;color:var(--muted);font-weight:700;margin-bottom:2px}
 .gear-now{font-size:50px;font-weight:800;line-height:1}
 .buttons{display:flex;gap:7px}
-button{width:76px;height:44px;background:#fff;border:1px solid #aeb4ba;border-radius:8px;
+button{touch-action:manipulation;width:76px;height:44px;background:#fff;border:1px solid #aeb4ba;border-radius:8px;
  font-size:14px;font-weight:800;cursor:pointer}
 button:hover:not(:disabled){background:#f2f3f4}
 button:disabled{opacity:.35;cursor:not-allowed}
@@ -82,7 +82,7 @@ button:disabled{opacity:.35;cursor:not-allowed}
   .gear-box{min-height:86px;padding:11px 12px}
   .gear-now{font-size:43px}
   .buttons{gap:6px;flex-shrink:0}
-  .buttons button{height:46px;width:76px}
+  .buttons button{touch-action:manipulation;height:46px;width:76px}
   .conditions{margin-top:8px;padding:10px 12px;font-size:11px;line-height:1.65;overflow-wrap:anywhere}
 }
 @media(max-width:380px){
@@ -94,7 +94,7 @@ button:disabled{opacity:.35;cursor:not-allowed}
   .delta-text{font-size:14px}
   .gear-now{font-size:39px}
   .buttons{gap:5px}
-  .buttons button{width:68px;font-size:12px}
+  .buttons button{touch-action:manipulation;width:68px;font-size:12px}
   .rpm-readout{font-size:21px}
   .section-title{font-size:12px}
 }
@@ -340,6 +340,11 @@ function initApp(){
   let sliderTouch = null;
   document.addEventListener('touchstart',function(e){
     const t=e.target.closest && e.target.closest('input[type="range"]');
+    const b=e.target.closest && e.target.closest('button');
+    if(b){
+      sliderTouch=null;
+      return;
+    }
     if(t && e.touches.length===1){
       sliderTouch={x:e.touches[0].clientX,y:e.touches[0].clientY};
     }else{
@@ -348,6 +353,7 @@ function initApp(){
     }
   },{passive:false,capture:true});
   document.addEventListener('touchmove',function(e){
+    if(e.target.closest && e.target.closest('button')) return;
     if(sliderTouch && e.target.closest && e.target.closest('input[type="range"]')){
       if(e.touches.length!==1)return;
       const dx=e.touches[0].clientX-sliderTouch.x;
